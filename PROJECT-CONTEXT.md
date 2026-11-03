@@ -232,7 +232,7 @@ E2E Harness: Fluxo crítico automatizado via Playwright: Visitar home
 
 - [x] **Fase 1 — Kernel Compartilhado: Money, Result/Either, erros, Clock e IdGenerator.
 
-- [~] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
+- [x] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
 
 - [ ] **Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
 
