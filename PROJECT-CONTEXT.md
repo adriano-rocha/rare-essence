@@ -152,6 +152,8 @@ export interface PagamentoGateway {
   criarCobrancaPix(params: CriarPixInput): Promise<Result<PixOutput, FalhaGateway>>;
   processarCartao(params: CriarCartaoInput): Promise<Result<CartaoOutput, FalhaGateway>>;
 }
+// Kernel Compartilhado: Padrão Result
+export type Result<S, E> = Success<S, E> | Failure<S, E>;
 
 // Frete
 export interface FreteGateway {
