@@ -164,6 +164,7 @@ export interface PedidoRepository {
   buscarPorId(id: string): Promise<Pedido | null>;
   buscarPorCodigo(codigo: string): Promise<Pedido | null>;
 }
+
 11. Estratégia de Testes e Harness
 Unit Harness: Testes exaustivos de domínio (Money, regras de transição de status do Pedido, cálculo de cupons, cálculo de frete grátis) sem banco e sem rede.
 Contract Harness: Testes aplicados de forma idêntica tanto para os fakes em memória quanto para os adapters reais de infraestrutura (garantindo o Princípio de Substituição de Liskov - LSP).
@@ -184,31 +185,33 @@ E2E Harness: Fluxo crítico automatizado via Playwright: Visitar home
 →
 →
  Tela de confirmação com Pix.
+
 12. Roadmap e Status por Fase
 
-Fase 0 — Fundação: Setup, tooling, CI, Docker Compose, PROJECT-CONTEXT v0.1, ADR-001 e teste de fumaça (dummy).
+- [x] **Fase 0 — Fundação:** Setup, tooling, CI, Docker Compose, PROJECT-CONTEXT v0.1, ADR-001 e teste de fumaça (dummy).
 
-Fase 1 — Kernel Compartilhado: Money, Result/Either, erros, Clock e IdGenerator.
+- [ ] **Fase 1 — Kernel Compartilhado: Money, Result/Either, erros, Clock e IdGenerator.
 
-Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
+- [ ] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
 
-Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
+- [ ] **Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
 
-Fase 4 — Carrinho e Precificação: Cálculo de subtotal, cupom, frete grátis e cálculo Pix/parcelamento.
+- [ ] **Fase 4 — Carrinho e Precificação: Cálculo de subtotal, cupom, frete grátis e cálculo Pix/parcelamento.
 
-Fase 5 — Pedidos: Snapshot de preços, agregação e máquina de estados estrita.
+- [ ] **Fase 5 — Pedidos: Snapshot de preços, agregação e máquina de estados estrita.
 
-Fase 6 — Pagamentos: Port de pagamento, adapter Mercado Pago (Pix/Cartão) e webhook com idempotência.
+- [ ] **Fase 6 — Pagamentos: Port de pagamento, adapter Mercado Pago (Pix/Cartão) e webhook com idempotência.
 
-Fase 7 — Frete: Port de frete, adapter Melhor Envio (PAC/SEDEX) e fake determinístico.
+- [ ] **Fase 7 — Frete: Port de frete, adapter Melhor Envio (PAC/SEDEX) e fake determinístico.
 
-Fase 8 — Identidade e Segurança (Admin Único): Autenticação isolada do lojista e rate limit nas bordas públicas.
+- [ ] **Fase 8 — Identidade e Segurança (Admin Único): Autenticação isolada do lojista e rate limit nas bordas públicas.
 
-Fase 9 — Interfaces (Storefront & Admin): UI em Paleta 2 (Noir & Âmbar), PDP com selector ml, slide-over cart, checkout convidado e admin de pedidos.
+- [ ] **Fase 9 — Interfaces (Storefront & Admin): UI em Paleta 2 (Noir & Âmbar), PDP com selector ml, slide-over cart, checkout convidado e admin de pedidos.
 
-Fase 10 — Produção: Deploy (Vercel + Neon/Render), observabilidade, metatags de SEO e runbook operacional.
+- [ ] **Fase 10 — Produção: Deploy (Vercel + Neon/Render), observabilidade, metatags de SEO e runbook operacional.
 
-Fase 11 — Evoluções: Melhorias planejadas sob demanda via novos ADRs.
+- [ ] **Fase 11 — Evoluções: Melhorias planejadas sob demanda via novos ADRs.
+
 13. Convenções
 Idioma de Negócio: Código e testes em português brasileiro contextualizado (ex.: calcularTotal(), PedidoNaoEncontradoError).
 Commits: Conventional Commits em português (ex.: feat(catalogo): adiciona entidade de produto e variacao).
@@ -220,6 +223,7 @@ Design Tokens (Paleta 2 - Noir & Âmbar):
 --brand-accent: #D97736
 --badge-pix: #10B981
 --border-subtle: #282D37
+
 14. Changelog de Decisões
 2025-05-10: Definição do escopo oficial como e-commerce autoral de perfumaria fina (Rare Essence).
 2025-05-10: Adoção da Paleta 2 (Noir & Âmbar) como design system primário.
