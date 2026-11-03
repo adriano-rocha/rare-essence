@@ -1,6 +1,6 @@
 # Rare Essence — Project Context & Specification
-> **Versão:** 0.1.0  
-> **Status:** Fase 0 — Em Definição Inicial  
+> **Versão:** 0.2.0  
+> **Status:** Fase 2 — Catálogo em Andamento    
 > **Fonte Única de Verdade (Single Source of Truth)**
 
 ---
@@ -89,6 +89,11 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
   Qualquer estado anterior a `ENVIADO` pode transicionar para `CANCELADO`. Pulos de etapa são expressamente proibidos.
 - `RN-008`: Um pedido gerado com pagamento em Pix tem validade de 30 minutos. Expirado o tempo, o pedido transiciona para `CANCELADO` e a reserva de estoque é liberada.
 - `RN-009`: O preço dos itens gravados no pedido é imutável via snapshot; alterações cadastrais posteriores nos perfumes não afetam pedidos existentes.
+- `RN-010`: Cada fragrância deve possuir um `Slug` único derivado de seu nome em formato kebab-case (ex.: `oud-royal`).
+- `RN-011`: O `SKU` de cada variação deve ser globalmente único, padronizado em caixa alta e hifens (ex.: `RARE-OUD-100ML`).
+- `RN-012`: O preço de uma variação deve ser estritamente positivo ($> 0$ centavos) e o volume em ml deve ser maior que zero.
+- `RN-013`: Uma fragrância só pode ser marcada como ativa se possuir ao menos uma variação cadastrada.
+- `RN-014`: A pirâmide olfativa de cada fragrância é composta obrigatoriamente por três grupos de notas: notas de topo (saída), notas de coração (corpo) e notas de base (fundo).
 
 ---
 
@@ -109,19 +114,34 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - **When:** O webhook do Mercado Pago notifica `payment.approved` com o `payment_id` correspondente.
 - **Then:** O sistema transiciona o pedido para `PAGO`, converte a reserva do estoque em baixa definitiva de forma atômica e registra o evento de idempotência.
 
+### `UC-004`: Obter Detalhes da Fragrância por Slug (PDP)
+- **Given:** Um slug existente no catálogo (ex.: `"oud-royal"`).
+- **When:** A consulta de produto for solicitada pela PDP pública.
+- **Then:** O sistema deve retornar a fragrância com suas variações ativas ordenadas por volume, marca, categoria e pirâmide olfativa. Se o slug não existir ou estiver inativo, deve retornar `ProdutoNaoEncontradoError`.
+
+### `UC-005`: Listar Fragrâncias do Catálogo (Vitrine)
+- **Given:** Fragrâncias cadastradas no banco de dados.
+- **When:** A vitrine for requisitada com filtros opcionais (categoria, marca, apenas ativas).
+- **Then:** O sistema deve retornar uma lista paginada de produtos agregados com suas variações e totalizador de registros.
+
 ---
 
 ## 8. Modelo de Domínio
 
 ### Entidades e Agregados:
-- **`Produto` (Agregado Raiz):** Identificador, nome, slug, descrição olfativa (notas de topo, corpo, fundo), ativo, variações.
-- **`Variacao` (Entidade interna):** Identificador, produtoId, volume (ex.: 50, 100), unidade ("ml"), sku, precoEmCentavos, estoqueDisponivel, estoqueReservado.
+- **`Produto` (Agregado Raiz):** Identificador, nome, slug (`Slug`), descrição, marca (`Marca`), categoria (`Categoria`), pirâmide olfativa (`PiramideOlfativa`), ativo, variações (`Variacao[]`), criadoEm, atualizadoEm.
+- **`Variacao` (Entidade interna):** Identificador, produtoId, volume (`Volume`), sku (`Sku`), preco (`Money`), pesoGramas, ativo.
+- **`Marca` (Entidade de apoio):** Identificador, nome, slug.
+- **`Categoria` (Entidade de apoio):** Identificador, nome, slug.
 - **`Pedido` (Agregado Raiz):** Identificador, codigoRastreavel, cliente (VO: nome, email, cpf, telefone), enderecoEntrega (VO), itens (VO: snapshot do SKU e preço), frete (VO: modalidade, prazo, valor), status, formaPagamento, totalEmCentavos, criadoEm, atualizadoEm.
 - **`Cupom` (Entidade):** Código, tipo (percentual/fixo), valor, valorMinimo, ativo, expiraEm.
 
 ### Value Objects (VO):
 - `Money`: Montante em centavos e código da moeda (`BRL`).
-- `Volume`: Quantidade numérica e unidade padronizada (`ml`).
+- `Volume`: Quantidade numérica inteira e unidade padronizada (`ml`).
+- `Sku`: String formatada e normalizada em caixa alta (ex.: `RARE-NOIR-50ML`).
+- `Slug`: String normalizada para URL amigável e segura (kebab-case).
+- `PiramideOlfativa`: Objeto com listas de notas olfativas: `topo: string[]`, `coracao: string[]`, `base: string[]`.
 - `CPF`: Validação algorítmica de CPF brasileiro.
 - `CEP`: Formato numérico de 8 dígitos validado.
 - `Endereco`: Logradouro, número, complemento, bairro, cidade, UF, CEP.
@@ -167,6 +187,24 @@ export interface PedidoRepository {
   buscarPorCodigo(codigo: string): Promise<Pedido | null>;
 }
 
+// Catálogo: Repositório e Filtros
+export interface FiltrosCatalogo {
+  categoriaSlug?: string;
+  marcaSlug?: string;
+  apenasAtivos?: boolean;
+  pagina?: number;
+  itensPorPagina?: number;
+}
+
+export interface ProdutoRepository {
+  salvar(produto: Produto): Promise<void>;
+  buscarPorId(id: string): Promise<Produto | null>;
+  buscarPorSlug(slug: string): Promise<Produto | null>;
+  buscarPorSku(sku: string): Promise<Produto | null>;
+  listar(filtros?: FiltrosCatalogo): Promise<{ produtos: Produto[]; total: number }>;
+  existeComSlug(slug: string): Promise<boolean>;
+}
+
 11. Estratégia de Testes e Harness
 Unit Harness: Testes exaustivos de domínio (Money, regras de transição de status do Pedido, cálculo de cupons, cálculo de frete grátis) sem banco e sem rede.
 Contract Harness: Testes aplicados de forma idêntica tanto para os fakes em memória quanto para os adapters reais de infraestrutura (garantindo o Princípio de Substituição de Liskov - LSP).
@@ -192,9 +230,9 @@ E2E Harness: Fluxo crítico automatizado via Playwright: Visitar home
 
 - [x] **Fase 0 — Fundação:** Setup, tooling, CI, Docker Compose, PROJECT-CONTEXT v0.1, ADR-001 e teste de fumaça (dummy).
 
-- [ ] **Fase 1 — Kernel Compartilhado: Money, Result/Either, erros, Clock e IdGenerator.
+- [x] **Fase 1 — Kernel Compartilhado: Money, Result/Either, erros, Clock e IdGenerator.
 
-- [ ] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
+- [~] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
 
 - [ ] **Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
 
@@ -226,11 +264,12 @@ Design Tokens (Paleta 2 - Noir & Âmbar):
 --badge-pix: #10B981
 --border-subtle: #282D37
 
-14. Changelog de Decisões
-2025-05-10: Definição do escopo oficial como e-commerce autoral de perfumaria fina (Rare Essence).
-2025-05-10: Adoção da Paleta 2 (Noir & Âmbar) como design system primário.
-2025-05-10: Simplificação do MVP para checkout de convidado e autenticação restrita apenas para admin único (YAGNI em contas completas de compradores).
-2025-05-10: Estabelecimento do protocolo de continuidade com renovação de sessão de chat ao final de cada entrega consolidada.
+## 14. Changelog de Decisões
+- 2026-11-02: Definição do escopo oficial como e-commerce autoral de perfumaria fina (Rare Essence).
+- 2026-11-02: Adoção da Paleta 2 (Noir & Âmbar) como design system primário.
+- 2026-11-02: Simplificação do MVP para checkout de convidado e autenticação restrita apenas para admin único (YAGNI em contas completas de compradores).
+- 2026-11-02: Conclusão da Fase 0 (Fundação) e Fase 1 (Kernel Compartilhado com 17 testes verdes e CI).
+- 2026-11-03: Especificação formal da Fase 2 (Catálogo): modelagem do agregado `Produto` com pirâmide olfativa (`PiramideOlfativa`), VOs `Sku`, `Slug`, `Volume` e contrato `ProdutoRepository`.
 code
 Code
 ---
