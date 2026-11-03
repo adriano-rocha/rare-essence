@@ -16,6 +16,7 @@ export function runProdutoRepositoryContractTests(
     it('deve salvar e buscar um produto por id', async () => {
       const produto = ProdutoBuilder.umProduto()
         .comId('p-1')
+        .comSlug('teste-p1')
         .comVariacao('RARE-TESTE-50ML', 50, 35000)
         .build();
 
@@ -47,6 +48,7 @@ export function runProdutoRepositoryContractTests(
     it('deve buscar um produto pelo SKU de uma de suas variações', async () => {
       const produto = ProdutoBuilder.umProduto()
         .comId('p-3')
+        .comSlug('teste-p3')
         .comVariacao('RARE-ESPECIAL-100ML', 100, 58000)
         .build();
 
@@ -61,7 +63,7 @@ export function runProdutoRepositoryContractTests(
       const produto = ProdutoBuilder.umProduto()
         .comId('p-4')
         .comSlug('ambre-solaire')
-        .comVariacao()
+        .comVariacao('RARE-AMBRE-SOL-50ML')
         .build();
 
       await sut.salvar(produto);
@@ -73,11 +75,13 @@ export function runProdutoRepositoryContractTests(
     it('deve listar produtos respeitando filtro de apenasAtivos', async () => {
       const produtoInativo = ProdutoBuilder.umProduto()
         .comId('p-inativo')
+        .comSlug('perfume-inativo')
         .comVariacao('RARE-INATIVO-50ML')
         .build();
 
       const produtoAtivo = ProdutoBuilder.umProduto()
         .comId('p-ativo')
+        .comSlug('perfume-ativo')
         .ativoNoCatalogo()
         .build();
 

@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Categoria {
+  id        String    @id @default(uuid())
+  nome      String
+  slug      String    @unique
+  produtos  Produto[]
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+
+  @@map("categorias")
+}
+
+model Marca {
+  id        String    @id @default(uuid())
+  nome      String
+  slug      String    @unique
+  produtos  Produto[]
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+
+  @@map("marcas")
+}
+
+model Produto {
+  id           String      @id @default(uuid())
+  nome         String
+  slug         String      @unique
+  descricao    String
+  marcaId      String      @map("marca_id")
+  categoriaId  String      @map("categoria_id")
+  notasTopo    String[]    @map("notas_topo")
+  notasCoracao String[]    @map("notas_coracao")
+  notasBase    String[]    @map("notas_base")
+  ativo        Boolean     @default(false)
+  criadoEm     DateTime    @default(now()) @map("criado_em")
+  atualizadoEm DateTime    @updatedAt @map("atualizado_em")
+
+  marca        Marca       @relation(fields: [marcaId], references: [id], onDelete: Restrict)
+  categoria    Categoria   @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  variacoes    Variacao[]
+
+  @@map("produtos")
+}
+
+model Variacao {
+  id            String   @id @default(uuid())
+  produtoId     String   @map("produto_id")
+  sku           String   @unique
+  volumeMl      Int      @map("volume_ml")
+  precoCentavos Int      @map("preco_centavos")
+  pesoGramas    Int      @default(250) @map("peso_gramas")
+  ativo         Boolean  @default(true)
+  criadoEm      DateTime @default(now()) @map("criado_em")
+
+  produto       Produto  @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@map("variacoes")
+}

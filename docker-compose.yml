@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: postgrespassword
       POSTGRES_DB: rare_essence
     ports:
-      - "5432:5432"
+      - "5442:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

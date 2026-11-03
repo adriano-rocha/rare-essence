@@ -6,10 +6,12 @@ import { Volume } from '@/modules/catalogo/domain/volume';
 import { PiramideOlfativa } from '@/modules/catalogo/domain/piramide-olfativa';
 import { Money } from '@/shared/core/money';
 
+let sequencia = 1;
+
 export class ProdutoBuilder {
-  private id = 'prod-1';
+  private id = `prod-test-${sequencia++}`;
   private nome = 'Noir Absolu';
-  private slug = Slug.criar('noir-absolu').value!;
+  private slug = Slug.criar(`noir-absolu-${sequencia}`).value!;
   private descricao = 'Uma fragrância oriental amadeirada marcante e misteriosa.';
   private marcaId = 'marca-rare';
   private categoriaId = 'cat-amadeirado';
@@ -42,10 +44,10 @@ export class ProdutoBuilder {
   }
 
   comVariacao(
-    skuStr = 'RARE-NOIR-50ML',
+    skuStr = `RARE-TEST-${sequencia++}-50ML`,
     volumeMl = 50,
     precoCentavos = 42000,
-    id = 'var-1'
+    id = `var-test-${sequencia++}`
   ): this {
     const variacao = Variacao.criar({
       id,
@@ -83,7 +85,7 @@ export class ProdutoBuilder {
     });
 
     if (produto.isFailure()) {
-      throw new Error(`Falha ao construir produto de teste: ${produto.error?.mensagem}`);
+      throw new Error(`Falha ao construir produto de teste: ${produto.error?.message}`);
     }
 
     return produto.value!;
