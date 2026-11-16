@@ -17,6 +17,7 @@ export function runProdutoRepositoryContractTests(
       const produto = ProdutoBuilder.umProduto()
         .comId('p-1')
         .comSlug('teste-p1')
+        .comImagemUrl('/elegance.png')
         .comVariacao('RARE-TESTE-50ML', 50, 35000)
         .build();
 
@@ -26,6 +27,7 @@ export function runProdutoRepositoryContractTests(
       expect(encontrado).not.toBeNull();
       expect(encontrado?.id).toBe('p-1');
       expect(encontrado?.nome).toBe(produto.nome);
+      expect(encontrado?.imagemUrl).toBe('/elegance.png');
       expect(encontrado?.variacoes.length).toBe(1);
       expect(encontrado?.variacoes[0].sku.valor).toBe('RARE-TESTE-50ML');
     });

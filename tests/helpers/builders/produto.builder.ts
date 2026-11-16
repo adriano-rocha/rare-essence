@@ -4,6 +4,7 @@ import { Slug } from '@/modules/catalogo/domain/slug';
 import { Sku } from '@/modules/catalogo/domain/sku';
 import { Volume } from '@/modules/catalogo/domain/volume';
 import { PiramideOlfativa } from '@/modules/catalogo/domain/piramide-olfativa';
+import { FamiliaOlfativa } from '@/modules/catalogo/domain/familia-olfativa';
 import { Money } from '@/shared/core/money';
 
 let sequencia = 1;
@@ -13,8 +14,10 @@ export class ProdutoBuilder {
   private nome = 'Noir Absolu';
   private slug = Slug.criar(`noir-absolu-${sequencia}`).value!;
   private descricao = 'Uma fragrância oriental amadeirada marcante e misteriosa.';
+  private imagemUrl: string | null = null;
   private marcaId = 'marca-rare';
   private categoriaId = 'cat-amadeirado';
+  private familiaOlfativa = FamiliaOlfativa.criar('AMADEIRADO').value!;
   private piramide = PiramideOlfativa.criar({
     topo: ['Bergamota', 'Pimenta Preta'],
     coracao: ['Íris', 'Rosa Damascena'],
@@ -38,8 +41,22 @@ export class ProdutoBuilder {
     return this;
   }
 
+  comImagemUrl(imagemUrl: string | null): this {
+    this.imagemUrl = imagemUrl;
+    return this;
+  }
+
   comSlug(slugStr: string): this {
     this.slug = Slug.criar(slugStr).value!;
+    return this;
+  }
+
+  comFamiliaOlfativa(codigo: string): this {
+    const resultado = FamiliaOlfativa.criar(codigo);
+    if (resultado.kind === 'failure') {
+      throw new Error(`Família olfativa inválida para builder: ${codigo}`);
+    }
+    this.familiaOlfativa = resultado.value;
     return this;
   }
 
@@ -49,12 +66,17 @@ export class ProdutoBuilder {
     precoCentavos = 42000,
     id = `var-test-${sequencia++}`
   ): this {
+    const preco = Money.fromCentavos(precoCentavos);
+    if (preco.kind === 'failure') {
+      throw new Error(`Preço inválido para builder: ${preco.error.mensagem}`);
+    }
+
     const variacao = Variacao.criar({
       id,
       produtoId: this.id,
       sku: Sku.criar(skuStr).value!,
       volume: Volume.criar(volumeMl).value!,
-      preco: Money.fromCentavos(precoCentavos),
+      preco: preco.value,
       pesoGramas: 250,
       ativo: true,
     }).value!;
@@ -77,8 +99,10 @@ export class ProdutoBuilder {
       nome: this.nome,
       slug: this.slug,
       descricao: this.descricao,
+      imagemUrl: this.imagemUrl,
       marcaId: this.marcaId,
       categoriaId: this.categoriaId,
+      familiaOlfativa: this.familiaOlfativa,
       piramideOlfativa: this.piramide,
       ativo: this.ativo,
       variacoes: this.variacoes,

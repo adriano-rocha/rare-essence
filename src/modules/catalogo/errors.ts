@@ -1,4 +1,10 @@
-import { DomainError } from '@/shared/domain/domain-error';
+import { DomainError } from '@/shared/core/errors/domain-error';
+
+export class FamiliaOlfativaInvalidaError extends DomainError {
+  constructor(mensagem = 'Família olfativa inválida.') {
+    super(mensagem, 'FAMILIA_OLFATIVA_INVALIDA');
+  }
+}
 
 export class SlugInvalidoError extends DomainError {
   constructor(mensagem = 'Slug inválido: deve estar em formato kebab-case e não pode ser vazio.') {

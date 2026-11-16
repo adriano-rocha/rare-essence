@@ -5,6 +5,14 @@ import { Sku } from '@/modules/catalogo/domain/sku';
 import { Volume } from '@/modules/catalogo/domain/volume';
 import { Money } from '@/shared/core/money';
 
+function dinheiro(centavos: number): Money {
+  const resultado = Money.fromCentavos(centavos);
+  if (resultado.kind === 'failure') {
+    throw new Error(resultado.error.mensagem);
+  }
+  return resultado.value;
+}
+
 describe('Produto (Agregado Raiz)', () => {
   it('deve instanciar um produto inativo inicialmente', () => {
     const produto = ProdutoBuilder.umProduto().build();
@@ -40,7 +48,7 @@ describe('Produto (Agregado Raiz)', () => {
       produtoId: produto.id,
       sku: Sku.criar('RARE-NOIR-50ML').value!,
       volume: Volume.criar(100).value!,
-      preco: Money.fromCentavos(65000),
+      preco: dinheiro(65000),
       pesoGramas: 300,
       ativo: true,
     }).value!;
@@ -51,7 +59,7 @@ describe('Produto (Agregado Raiz)', () => {
   });
 
   it('RN-012: deve rejeitar criação de variação com preço menor ou igual a zero', () => {
-    const precoZero = Money.fromCentavos(0);
+    const precoZero = dinheiro(0);
     const variacao = Variacao.criar({
       id: 'var-invalida',
       produtoId: 'prod-1',

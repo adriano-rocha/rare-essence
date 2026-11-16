@@ -4,12 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:demo": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-demo.ps1",
+    "demo:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/demo-reset.ps1",
+    "db:migrate:deploy": "prisma migrate deploy",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "admin:hash": "tsx scripts/hash-admin-password.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

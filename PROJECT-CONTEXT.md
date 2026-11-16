@@ -1,6 +1,6 @@
 # Rare Essence — Project Context & Specification
-> **Versão:** 0.2.0  
-> **Status:** Fase 2 — Catálogo em Andamento    
+> **Versão:** 0.5.0
+> **Status:** Preparação local da Fase 10 implementada parcialmente — Fase 9 e deploy de produção permanecem incompletos
 > **Fonte Única de Verdade (Single Source of Truth)**
 
 ---
@@ -8,7 +8,7 @@
 ## 1. Visão e Objetivos
 A **Rare Essence** é um e-commerce de perfumaria fina e de nicho com experiência de compra de alta conversão, inspirada nas melhores práticas de UX da plataforma Nuvemshop (referência estrutural: *The King of Parfums*), implementada com código 100% autoral, arquitetura limpa (Clean Architecture), abordagem orientada por especificações (Spec-Driven Development) e testes rigorosos (Harness).
 
-O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark mode sofisticado (Noir & Âmbar), catálogo com até 10 fragrâncias selecionadas com variação por volume (`ml`), cálculo de frete dinâmico no carrinho lateral, comparativo de preço Pix vs. parcelado e checkout rápido como convidado.
+O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark mode sofisticado (Noir & Ametista), catálogo com até 12 fragrâncias selecionadas com variação por volume (`ml`), cálculo de frete dinâmico no carrinho lateral, comparativo de preço Pix vs. parcelado e checkout rápido como convidado.
 
 ---
 
@@ -22,7 +22,7 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - Painel administrativo restrito para o administrador da loja gerenciar pedidos, estoque e produtos.
 - Integração de pagamentos com **Mercado Pago** (Pix com QR Code/Copia e Cola e Cartão de Crédito transparente).
 - Integração de frete com **Melhor Envio** (cotações de PAC e SEDEX dos Correios) com adapter simulado para testes locais.
-- Catálogo contendo no máximo 10 perfumes no seed oficial.
+- Catálogo contendo no máximo 12 perfumes no seed oficial.
 
 ### Fora de Escopo (YAGNI — Somente via ADR futuro):
 - Contas de clientes com painel logado e histórico complexo.
@@ -49,7 +49,7 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 ---
 
 ## 4. Requisitos Funcionais (RF)
-- `RF-001`: O sistema deve listar o catálogo com até 10 fragrâncias na vitrine pública.
+- `RF-001`: O sistema deve listar o catálogo com até 12 fragrâncias na vitrine pública.
 - `RF-002`: O sistema deve permitir visualizar a PDP com seleção dinâmica de volume (`ml`).
 - `RF-003`: O sistema deve recalcular os valores de Pix e parcelas instantaneamente ao alternar o volume.
 - `RF-004`: O sistema deve exibir a gaveta de carrinho ao adicionar um item, sem recarregar a página.
@@ -63,17 +63,22 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - `RF-012`: O sistema deve cancelar o pedido e estornar a reserva caso o Pix expire sem pagamento.
 - `RF-013`: O sistema deve permitir autenticação exclusiva de Administrador via credenciais seguras para acesso ao `/admin`.
 - `RF-014`: O sistema deve permitir ao Administrador listar pedidos, visualizar detalhes e atualizar status de rastreio de envio.
+- `RF-015`: O sistema deve consultar o saldo disponível (`fisico - reservado`) de qualquer SKU em tempo real.
+- `RF-016`: O sistema deve permitir a reposição ou ajuste manual do saldo físico de um SKU pelo painel administrativo.
 
 ---
 
 ## 5. Requisitos Não Funcionais (RNF)
 - `RNF-001`: **Moeda e Precisão:** Valores monetários devem ser manipulados exclusivamente em centavos (inteiros) via Value Object `Money`.
-- `RNF-002`: **Identidade Visual:** A UI deve respeitar estritamente a **Paleta 2 (Noir & Âmbar)** com suporte a alta acessibilidade de contraste (WCAG AA).
+- `RNF-002`: **Identidade Visual:** A UI deve respeitar estritamente a **Paleta 2 (Noir & Ametista)** com suporte a alta acessibilidade de contraste (WCAG AA).
 - `RNF-003`: **Performance:** First Contentful Paint (FCP) < 1.2s e Largest Contentful Paint (LCP) < 2.0s em conexões 4G simuladas.
 - `RNF-004`: **Segurança de Entrada:** 100% dos dados nas bordas HTTP/Server Actions validados com Zod; injeção de parâmetros crus no domínio é proibida.
 - `RNF-005`: **Isolamento de Domínio:** O módulo de domínio não pode importar Prisma, React, Next.js ou bibliotecas de terceiros além de utilitários puros.
 - `RNF-006`: **Idempotência:** Endpoints de webhook devem suportar requisições duplicadas com chave única baseada no ID do evento externo.
 - `RNF-007`: **SEO Técnico:** Metatags dinâmicas OpenGraph, JSON-LD de `Product` para cada perfume e geração automatizada de `sitemap.xml`.
+- `RNF-008`: **Tolerância a Concorrência:** O módulo de estoque deve garantir zero *over-selling* (venda sem saldo físico) mesmo sob requisições paralelas concorrentes contra o mesmo SKU, utilizando bloqueio a nível de linha (*pessimistic lock*) ou controle transacional estrito.
+- `RNF-009`: **Autenticação Administrativa:** Deve existir uma única identidade administrativa, validada por senha armazenada como hash scrypt e sessão HMAC de até 8 horas em cookie `HttpOnly`, `SameSite=Strict` e `Secure` em produção.
+- `RNF-010`: **Rate Limit:** Login administrativo deve aceitar até 5 tentativas por IP a cada 15 minutos e criação de pagamentos até 10 requisições por IP por minuto. Os contadores são atômicos e compartilhados via PostgreSQL; indisponibilidade do limitador falha fechada. O webhook permanece protegido por HMAC e idempotência, sem limite por IP para não bloquear retentativas legítimas.
 
 ---
 
@@ -94,6 +99,10 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - `RN-012`: O preço de uma variação deve ser estritamente positivo ($> 0$ centavos) e o volume em ml deve ser maior que zero.
 - `RN-013`: Uma fragrância só pode ser marcada como ativa se possuir ao menos uma variação cadastrada.
 - `RN-014`: A pirâmide olfativa de cada fragrância é composta obrigatoriamente por três grupos de notas: notas de topo (saída), notas de coração (corpo) e notas de base (fundo).
+- `RN-015`: O **Saldo Disponível** é uma propriedade calculada imutável: $\text{Disponível} = \text{Físico} - \text{Reservado}$. O saldo disponível jamais pode ser negativo.
+- `RN-016`: Uma reserva de estoque só é aceita se $\text{Disponível} \ge \text{Quantidade Solicitada}$. Caso contrário, a operação é rejeitada com `EstoqueInsuficienteError`.
+- `RN-017`: A confirmação de baixa definitiva liquida a reserva e subtrai o estoque físico: $\text{Físico} \leftarrow \text{Físico} - Q$ e $\text{Reservado} \leftarrow \text{Reservado} - Q$. É proibido baixar sem reserva prévia compatível.
+- `RN-018`: O cancelamento ou expiração de uma reserva reverte apenas o saldo reservado: $\text{Reservado} \leftarrow \text{Reservado} - Q$, sem alterar o saldo físico.
 
 ---
 
@@ -102,17 +111,20 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 ### `UC-001`: Calcular Totais do Carrinho com Frete e Desconto
 - **Given:** Um carrinho com 1 unidade de perfume "Oud Royal 100ml" (R$ 380,00) e CEP "01001-000".
 - **When:** O cliente solicita o cálculo informando o CEP.
-- **Then:** O frete PAC deve ser retornado como R$ 0,00 (por atingir `RN-006`), o total no Pix deve exibir R$ 361,00 (5% de desconto via `RN-001`), e o total parcelado deve exibir R$ 380,00 em até 6x de R$ 63,33 sem juros.
+- **Then:** O frete PAC deve ser retornado como R$ 0,00 (por atingir `RN-006`), o total no Pix deve exibir R$ 361,00 (5% de desconto via `RN-001`), e o total parcelado deve exibir R$ 380,00 em até 6x de R$ 63,33 sem juros, ajustando centavos residuais na última parcela.
+- **Cupom + Pix:** Se ambos forem aplicados, o cupom reduz primeiro o subtotal e os 5% do Pix incidem sobre o valor restante. O limite de frete grátis considera o subtotal dos produtos antes dos descontos.
 
 ### `UC-002`: Criar Pedido com Checkout Convidado
 - **Given:** Um carrinho válido e os dados pessoais/entrega do cliente sem autenticação prévia.
 - **When:** O cliente submete a finalização com opção de pagamento Pix.
 - **Then:** O sistema cria o pedido no estado `CRIADO`, faz a reserva do estoque do SKU, gera a chave Pix via port do Mercado Pago e retorna o payload com validade de 30 minutos.
+- **Fronteira aprovada para a Fase 6:** o endpoint de pagamento recebe um pedido já criado; a criação coordenada do pedido com reserva de estoque permanece pendente para a orquestração de checkout.
 
 ### `UC-003`: Processar Confirmação de Webhook de Pagamento
 - **Given:** Um pedido existente com status `CRIADO` e reserva pendente.
 - **When:** O webhook do Mercado Pago notifica `payment.approved` com o `payment_id` correspondente.
-- **Then:** O sistema transiciona o pedido para `PAGO`, converte a reserva do estoque em baixa definitiva de forma atômica e registra o evento de idempotência.
+- **Then:** O sistema valida o pagamento no provedor, transiciona o pedido para `PAGO` e registra o evento de forma idempotente.
+- **Fronteira aprovada para a Fase 6:** o módulo de pagamentos valida o pagamento e atualiza o pedido/evento de forma idempotente. A reserva inicial e a liquidação/liberação do estoque ficam para a futura orquestração de checkout.
 
 ### `UC-004`: Obter Detalhes da Fragrância por Slug (PDP)
 - **Given:** Um slug existente no catálogo (ex.: `"oud-royal"`).
@@ -123,6 +135,27 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - **Given:** Fragrâncias cadastradas no banco de dados.
 - **When:** A vitrine for requisitada com filtros opcionais (categoria, marca, apenas ativas).
 - **Then:** O sistema deve retornar uma lista paginada de produtos agregados com suas variações e totalizador de registros.
+### `UC-006`: Reservar Estoque para Checkout
+- **Given:** Um SKU com 5 unidades físicas e 0 reservadas (disponível: 5).
+- **When:** O caso de uso `ReservarEstoque` for executado com quantidade 2.
+- **Then:** O saldo físico permanece 5, o saldo reservado torna-se 2 e o saldo disponível torna-se 3.
+- **Critério de Falha:** Se solicitado quantidade 6, a operação falha com `EstoqueInsuficienteError` e o estado permanece inalterado.
+
+### `UC-007`: Confirmar Baixa Definitiva de Estoque
+- **Given:** Um SKU com 5 unidades físicas e 2 unidades reservadas.
+- **When:** O caso de uso `ConfirmarBaixaEstoque` for executado com quantidade 2.
+- **Then:** O saldo físico passa a ser 3, o saldo reservado passa a ser 0 e o saldo disponível permanece 3.
+
+### `UC-008`: Liberar Reserva de Estoque Expirada/Cancelada
+- **Given:** Um SKU com 5 unidades físicas e 2 unidades reservadas.
+- **When:** O caso de uso `LiberarReservaEstoque` for executado com quantidade 2.
+- **Then:** O saldo físico permanece 5, o saldo reservado passa a ser 0 e o saldo disponível volta a ser 5.
+
+### `UC-009`: Autenticar o Administrador Único
+- **Given:** E-mail, hash scrypt e segredo de sessão configurados no ambiente.
+- **When:** O administrador informa as credenciais corretas em `/admin/login`.
+- **Then:** A aplicação cria uma sessão assinada com validade de até 8 horas; rotas `/admin/*` e `/api/admin/*` exigem uma sessão válida, exceto login/logout.
+- **Critério de Falha:** Credenciais inválidas recebem a mesma mensagem; após 5 tentativas em 15 minutos, o login retorna HTTP 429.
 
 ---
 
@@ -135,6 +168,7 @@ O objetivo é entregar uma réplica refinada e enxuta: vitrine imersiva com dark
 - **`Categoria` (Entidade de apoio):** Identificador, nome, slug.
 - **`Pedido` (Agregado Raiz):** Identificador, codigoRastreavel, cliente (VO: nome, email, cpf, telefone), enderecoEntrega (VO), itens (VO: snapshot do SKU e preço), frete (VO: modalidade, prazo, valor), status, formaPagamento, totalEmCentavos, criadoEm, atualizadoEm.
 - **`Cupom` (Entidade):** Código, tipo (percentual/fixo), valor, valorMinimo, ativo, expiraEm.
+- **`EstoqueItem` (Agregado Raiz do Bounded Context de Estoque):** Identificador (`id`), referência da variação (`variacaoId`), quantidade física (`quantidadeFisica`), quantidade reservada (`quantidadeReservada`), criadoEm, atualizadoEm.
 
 ### Value Objects (VO):
 - `Money`: Montante em centavos e código da moeda (`BRL`).
@@ -205,6 +239,18 @@ export interface ProdutoRepository {
   existeComSlug(slug: string): Promise<boolean>;
 }
 
+export interface EstoqueRepository {
+  salvar(item: EstoqueItem): Promise<void>;
+  buscarPorVariacaoId(variacaoId: string): Promise<EstoqueItem | null>;
+  executarComLock<T>(
+    variacaoId: string,
+    operacao: (
+      item: EstoqueItem | null,
+      salvar: (item: EstoqueItem) => Promise<void>
+    ) => Promise<T>
+  ): Promise<T>;
+}
+
 11. Estratégia de Testes e Harness
 Unit Harness: Testes exaustivos de domínio (Money, regras de transição de status do Pedido, cálculo de cupons, cálculo de frete grátis) sem banco e sem rede.
 Contract Harness: Testes aplicados de forma idêntica tanto para os fakes em memória quanto para os adapters reais de infraestrutura (garantindo o Princípio de Substituição de Liskov - LSP).
@@ -234,33 +280,33 @@ E2E Harness: Fluxo crítico automatizado via Playwright: Visitar home
 
 - [x] **Fase 2 — Catálogo: Entidades de Perfume, Variação (ml), seed de 10 fragrâncias e ProdutoRepository (Fake + Prisma).
 
-- [ ] **Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
+- [x] **Fase 3 — Estoque: Saldos, reservas atômicas e proteção contra over-selling.
 
-- [ ] **Fase 4 — Carrinho e Precificação: Cálculo de subtotal, cupom, frete grátis e cálculo Pix/parcelamento.
+- [x] **Fase 4 — Carrinho e Precificação: Cálculo de subtotal, cupom, frete grátis e cálculo Pix/parcelamento.
 
-- [ ] **Fase 5 — Pedidos: Snapshot de preços, agregação e máquina de estados estrita.
+- [x] **Fase 5 — Pedidos: Snapshot de preços, agregação e máquina de estados estrita.
 
-- [ ] **Fase 6 — Pagamentos: Port de pagamento, adapter Mercado Pago (Pix/Cartão) e webhook com idempotência.
+- [x] **Fase 6 — Pagamentos: Port de pagamento, adapter Mercado Pago (Pix/Cartão) e webhook com idempotência. Integração validada localmente; teste sandbox externo aguarda credenciais `TEST-`.
 
-- [ ] **Fase 7 — Frete: Port de frete, adapter Melhor Envio (PAC/SEDEX) e fake determinístico.
+- [x] **Fase 7 — Frete:** Port de cotação, adapter Melhor Envio restrito ao sandbox (PAC/SEDEX) e fake determinístico. Validação externa aguarda token de sandbox, CEP de origem e User-Agent válidos.
 
-- [ ] **Fase 8 — Identidade e Segurança (Admin Único): Autenticação isolada do lojista e rate limit nas bordas públicas.
+- [x] **Fase 8 — Identidade e Segurança:** Administrador único por credenciais configuradas, sessão HMAC em cookie seguro, proteção de `/admin/*` e `/api/admin/*`, rate limit PostgreSQL para login, cotação/checkout e criação de pagamentos.
 
-- [ ] **Fase 9 — Interfaces (Storefront & Admin): UI em Paleta 2 (Noir & Âmbar), PDP com selector ml, slide-over cart, checkout convidado e admin de pedidos.
+- [ ] **Fase 9 — Interfaces (Storefront & Admin):** Vitrine, PDP com seletor de volume, carrinho lateral, checkout convidado Pix e painel de pedidos iniciados. Permanecem pendentes: cupom persistido, tokenização de cartão, rastreio (campo ausente no schema) e rotina de expiração/liberação de reservas.
 
-- [ ] **Fase 10 — Produção: Deploy (Vercel + Neon/Render), observabilidade, metatags de SEO e runbook operacional.
+- [ ] **Fase 10 — Produção (Vercel + Neon):** Preparação local de SEO, health check, logs JSON e runbook implementada. Pendentes: provisionamento e deploy manual, ambiente/secrets/domínio, alertas, cadastro seguro do catálogo e validação em Production; go-live também depende dos bloqueios da Fase 9.
 
 - [ ] **Fase 11 — Evoluções: Melhorias planejadas sob demanda via novos ADRs.
 
 13. Convenções
 Idioma de Negócio: Código e testes em português brasileiro contextualizado (ex.: calcularTotal(), PedidoNaoEncontradoError).
 Commits: Conventional Commits em português (ex.: feat(catalogo): adiciona entidade de produto e variacao).
-Design Tokens (Paleta 2 - Noir & Âmbar):
+Design Tokens (Paleta 2 - Noir & Ametista):
 --bg-primary: #0E1013
 --bg-surface: #181B20
 --text-main: #F4F4F6
 --text-muted: #9CA3AF
---brand-accent: #D97736
+--brand-accent: #C084FC
 --badge-pix: #10B981
 --border-subtle: #282D37
 
@@ -270,6 +316,16 @@ Design Tokens (Paleta 2 - Noir & Âmbar):
 - 2026-11-02: Simplificação do MVP para checkout de convidado e autenticação restrita apenas para admin único (YAGNI em contas completas de compradores).
 - 2026-11-02: Conclusão da Fase 0 (Fundação) e Fase 1 (Kernel Compartilhado com 17 testes verdes e CI).
 - 2026-11-03: Especificação formal da Fase 2 (Catálogo): modelagem do agregado `Produto` com pirâmide olfativa (`PiramideOlfativa`), VOs `Sku`, `Slug`, `Volume` e contrato `ProdutoRepository`.
+- 2026-11-03: Conclusão da Fase 2 (Catálogo) com 48 testes automatizados no CI/Local.
+- 2026-11-03: Especificação formal da Fase 3 (Estoque): definição das regras `RN-015` a `RN-018`, casos de uso `UC-006` a `UC-008`, e isolamento do agregado `EstoqueItem` desacoplado do catálogo.
+- 2026-11-15: Conclusão da Fase 3 (Estoque), migration PostgreSQL aplicada, reservas concorrentes verificadas e suíte completa aprovada (63 testes).
+- 2026-11-15: Conclusão da Fase 4 (Carrinho e Precificação), com cupom antes do desconto Pix, limite do frete grátis baseado no subtotal bruto, parcelamento sem perda de centavos e 74 testes aprovados.
+- 2026-11-15: Conclusão da Fase 5 (Pedidos), com snapshots validados, máquina de estados e expiração Pix, persistência PostgreSQL e 82 testes aprovados; integração com gateways e liquidação/liberação de estoque permanecem nas fases seguintes.
+- 2026-11-15: Implementação local da Fase 6 (Pagamentos): port Pix/cartão, adapter Mercado Pago restrito a token `TEST-`, assinatura HMAC do webhook, consulta independente do pagamento e idempotência persistida por evento; migration aplicada e suíte completa com 100 testes aprovada. Validação externa aguarda credenciais sandbox; reserva/liquidação de estoque foi explicitamente adiada para a orquestração de checkout.
+- 2026-11-15: Implementação local da Fase 7 (Frete): port e caso de uso de cotação, fake determinístico PAC/SEDEX e adapter Melhor Envio fixado no sandbox; 8 testes focados e type-check aprovados. Validação externa aguarda credenciais de sandbox.
+- 2026-11-15: Implementação local da Fase 8 (Identidade e Segurança): autenticação do administrador único com hash scrypt, sessão HMAC em cookie protegido, rate limit PostgreSQL atômico para login/pagamentos e middleware de proteção; contrato concorrente e testes unitários aprovados.
+- 2026-11-15: Início da Fase 9: vitrine Noir & Âmbar, PDP com preços calculados no servidor, carrinho lateral, cotação de frete, checkout convidado com reserva de estoque compensável e painel administrativo de pedidos. Validação de sandbox depende de credenciais; cupom persistido, tokenização de cartão, rastreio e liberação automatizada após expiração seguem pendentes.
+- 2026-11-16: Início da Fase 10 (Vercel + Neon): metadados SEO, robots/sitemap, endpoint de prontidão, logs estruturados, conexão Prisma pooled/direct e runbook preparados no repositório. Deploy, secrets, domínio, alertas, catálogo e blockers de produção seguem pendentes.
 code
 Code
 ---

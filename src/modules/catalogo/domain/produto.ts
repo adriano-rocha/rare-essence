@@ -1,6 +1,7 @@
 import { Result } from '@/shared/core/result';
 import { Slug } from './slug';
 import { PiramideOlfativa } from './piramide-olfativa';
+import { FamiliaOlfativa } from './familia-olfativa';
 import { Variacao } from './variacao';
 import { ProdutoSemVariacoesError, SkuDuplicadoError } from './errors';
 
@@ -9,8 +10,10 @@ export interface ProdutoProps {
   nome: string;
   slug: Slug;
   descricao: string;
+  imagemUrl?: string | null;
   marcaId: string;
   categoriaId: string;
+  familiaOlfativa: FamiliaOlfativa;
   piramideOlfativa: PiramideOlfativa;
   ativo: boolean;
   variacoes?: Variacao[];
@@ -37,8 +40,10 @@ export class Produto {
   get nome(): string { return this.props.nome; }
   get slug(): Slug { return this.props.slug; }
   get descricao(): string { return this.props.descricao; }
+  get imagemUrl(): string | null { return this.props.imagemUrl ?? null; }
   get marcaId(): string { return this.props.marcaId; }
   get categoriaId(): string { return this.props.categoriaId; }
+  get familiaOlfativa(): FamiliaOlfativa { return this.props.familiaOlfativa; }
   get piramideOlfativa(): PiramideOlfativa { return this.props.piramideOlfativa; }
   get ativo(): boolean { return this._ativo; }
   get variacoes(): readonly Variacao[] { return Object.freeze([...this._variacoes]); }

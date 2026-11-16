@@ -1,63 +1,119 @@
-import { describe, it, expect } from "vitest";
-import { Money } from "@/shared/core/money";
+import { describe, it, expect } from 'vitest';
+import { Money } from '@/shared/core/money';
 
-describe("Kernel: Money Value Object (RNF-001)", () => {
-  it("deve criar uma quantia monetária em centavos inteiros", () => {
-    const preco = Money.fromCentavos(38000); // R$ 380,00
+function dinheiro(centavos: number, moeda = 'BRL'): Money {
+  const resultado = Money.fromCentavos(centavos, moeda);
+  if (resultado.kind === 'failure') {
+    throw new Error(resultado.error.mensagem);
+  }
+  return resultado.value;
+}
+
+describe('Kernel: Money Value Object (RNF-001)', () => {
+  it('deve criar uma quantia monetária em centavos inteiros', () => {
+    const preco = dinheiro(38000);
 
     expect(preco.centavos).toBe(38000);
-    expect(preco.moeda).toBe("BRL");
+    expect(preco.moeda).toBe('BRL');
   });
 
-  it("deve rejeitar valores com casas decimais (não inteiros)", () => {
-    expect(() => Money.fromCentavos(38000.5)).toThrow(
-      "A quantia em centavos deve ser um número inteiro."
-    );
+  it('deve retornar falha para valores que não sejam inteiros seguros', () => {
+    expect(Money.fromCentavos(38000.5).kind).toBe('failure');
+    expect(Money.fromCentavos(Number.MAX_SAFE_INTEGER + 1).kind).toBe('failure');
   });
 
-  it("deve rejeitar valores negativos na criação básica", () => {
-    expect(() => Money.fromCentavos(-100)).toThrow(
-      "A quantia em centavos não pode ser negativa."
-    );
+  it('deve retornar falha para valores negativos ou códigos de moeda inválidos', () => {
+    expect(Money.fromCentavos(-100).kind).toBe('failure');
+    expect(Money.fromCentavos(100, 'BR').kind).toBe('failure');
   });
 
-  it("deve somar duas quantias monetárias com imutabilidade", () => {
-    const item1 = Money.fromCentavos(15000); // R$ 150,00
-    const item2 = Money.fromCentavos(20000); // R$ 200,00
+  it('deve converter reais em centavos sem usar ponto flutuante', () => {
+    const resultado = Money.fromReais('380,05');
 
+    expect(resultado.kind).toBe('success');
+    if (resultado.kind === 'success') {
+      expect(resultado.value.centavos).toBe(38005);
+    }
+
+    expect(Money.fromReais('380,005').kind).toBe('failure');
+    expect(Money.fromReais('-1,00').kind).toBe('failure');
+  });
+
+  it('deve somar duas quantias sem alterar os valores originais', () => {
+    const item1 = dinheiro(15000);
+    const item2 = dinheiro(20000);
     const total = item1.somar(item2);
 
-    expect(total.centavos).toBe(35000); // R$ 350,00
-    expect(item1.centavos).toBe(15000); // Original inalterado
-    expect(item2.centavos).toBe(20000); // Original inalterado
+    expect(total.kind).toBe('success');
+    if (total.kind === 'success') {
+      expect(total.value.centavos).toBe(35000);
+    }
+    expect(item1.centavos).toBe(15000);
+    expect(item2.centavos).toBe(20000);
   });
 
-  it("deve subtrair quantias monetárias e impedir saldo negativo", () => {
-    const total = Money.fromCentavos(10000);
-    const cupom = Money.fromCentavos(4000);
+  it('deve retornar falha para soma acima do limite seguro ou moedas distintas', () => {
+    const limite = dinheiro(Number.MAX_SAFE_INTEGER);
 
-    const resultado = total.subtrair(cupom);
-
-    expect(resultado.centavos).toBe(6000);
-    expect(() => cupom.subtrair(total)).toThrow(
-      "Resultado monetário não pode ser negativo."
-    );
+    expect(limite.somar(dinheiro(1)).kind).toBe('failure');
+    expect(dinheiro(100).somar(dinheiro(100, 'USD')).kind).toBe('failure');
   });
 
-  it("deve calcular desconto percentual com arredondamento seguro (RN-001: 5% Pix)", () => {
-    // R$ 379,90 = 37990 centavos. 5% = 1899.5 centavos -> Deve arredondar para 1900 centavos
-    const original = Money.fromCentavos(37990);
-    const comDesconto = original.aplicarDescontoPercentual(5);
+  it('deve subtrair quantias e impedir saldo negativo', () => {
+    const total = dinheiro(10000);
+    const desconto = dinheiro(4000);
+    const resultado = total.subtrair(desconto);
 
-    expect(comDesconto.centavos).toBe(36090); // 37990 - 1900 = 36090
+    expect(resultado.kind).toBe('success');
+    if (resultado.kind === 'success') {
+      expect(resultado.value.centavos).toBe(6000);
+    }
+    expect(total.subtrair(dinheiro(10001)).kind).toBe('failure');
+    expect(total.subtrair(dinheiro(1, 'USD')).kind).toBe('failure');
   });
 
-  it("deve formatar para Real Brasileiro (BRL) corretamente", () => {
-    const preco = Money.fromCentavos(38000);
-    
-    // Normalizamos espaços não separáveis que o Intl pode gerar
-    const formatado = preco.formatarBRL().replace(/\u00a0/g, " ");
+  it('deve aplicar desconto fixo sem mutar o valor original', () => {
+    const total = dinheiro(10000);
+    const resultado = total.aplicarDesconto(dinheiro(2500));
 
-    expect(formatado).toBe("R$ 380,00");
+    expect(resultado.kind).toBe('success');
+    if (resultado.kind === 'success') {
+      expect(resultado.value.centavos).toBe(7500);
+    }
+    expect(total.centavos).toBe(10000);
+  });
+
+  it('deve aplicar desconto percentual com arredondamento half-up determinístico', () => {
+    const original = dinheiro(37990);
+    const resultado = original.aplicarDescontoPercentual(5);
+
+    expect(resultado.kind).toBe('success');
+    if (resultado.kind === 'success') {
+      expect(resultado.value.centavos).toBe(36090);
+    }
+
+    const fracao = dinheiro(100).aplicarDescontoPercentual(2.5);
+    expect(fracao.kind).toBe('success');
+    if (fracao.kind === 'success') {
+      expect(fracao.value.centavos).toBe(97);
+    }
+
+    for (const percentual of [-1, 101, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(dinheiro(100).aplicarDescontoPercentual(percentual).kind).toBe(
+        'failure'
+      );
+    }
+  });
+
+  it('deve formatar para Real Brasileiro (BRL) corretamente', () => {
+    const formatado = dinheiro(38000)
+      .formatarBRL()
+      .replace(/\u00a0/g, ' ');
+
+    expect(formatado).toBe('R$ 380,00');
+  });
+
+  it('deve manter o objeto imutável', () => {
+    expect(Object.isFrozen(dinheiro(100))).toBe(true);
   });
 });
