@@ -8,7 +8,7 @@
     "dev:demo": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-demo.ps1",
     "demo:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/demo-reset.ps1",
     "db:migrate:deploy": "prisma migrate deploy",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
