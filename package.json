@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "dev:demo": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-demo.ps1",
     "demo:reset": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/demo-reset.ps1",
