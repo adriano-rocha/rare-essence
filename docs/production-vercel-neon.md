@@ -7,7 +7,7 @@ Este runbook prepara o deploy, mas **não significa que a loja esteja pronta par
 ## Recursos preparados no repositório
 
 - Prisma usa `DATABASE_URL` para a aplicação e `DIRECT_URL` para migrations sem pool.
-- A instalação executa `prisma generate` via `postinstall`, evitando reutilizar um Prisma Client incompatível no build da Vercel.
+- A instalação executa `prisma generate` via `postinstall`; `allowScripts` autoriza somente scripts das versões revisadas de Prisma, esbuild e sharp para builds com npm 11.
 - `npm run db:migrate:deploy` aplica somente migrations versionadas.
 - `/api/health` verifica a conexão com PostgreSQL sem revelar detalhes internos.
 - Erros de requisição são registrados em JSON no log do servidor, sem payloads nem cabeçalhos de autenticação.
