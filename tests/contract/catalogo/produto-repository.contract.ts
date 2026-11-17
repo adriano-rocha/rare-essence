@@ -4,9 +4,12 @@ import { ProdutoBuilder } from '../../helpers/builders/produto.builder';
 
 export function runProdutoRepositoryContractTests(
   repositoryName: string,
-  repositoryFactory: () => Promise<ProdutoRepository> | ProdutoRepository
+  repositoryFactory: () => Promise<ProdutoRepository> | ProdutoRepository,
+  skip = false
 ) {
-  describe(`Contract Test: ${repositoryName} (LSP)`, () => {
+  const defineSuite = skip ? describe.skip : describe;
+
+  defineSuite(`Contract Test: ${repositoryName} (LSP)`, () => {
     let sut: ProdutoRepository;
 
     beforeEach(async () => {

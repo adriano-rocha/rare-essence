@@ -4,8 +4,9 @@ import { runProdutoRepositoryContractTests } from './produto-repository.contract
 
 const shouldRunDbTests = !!process.env.DATABASE_URL;
 
-if (shouldRunDbTests) {
-  runProdutoRepositoryContractTests('PrismaProdutoRepository', async () => {
+runProdutoRepositoryContractTests(
+  'PrismaProdutoRepository',
+  async () => {
     // 1. Limpa produtos e variações de testes anteriores para garantir isolamento
     await prisma.variacao.deleteMany();
     await prisma.produto.deleteMany();
@@ -24,5 +25,6 @@ if (shouldRunDbTests) {
     });
 
     return new PrismaProdutoRepository(prisma);
-  });
-}
+  },
+  !shouldRunDbTests
+);
