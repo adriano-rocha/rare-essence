@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   createContext,
   FormEvent,
+  MouseEvent,
   ReactNode,
   useContext,
   useEffect,
@@ -12,9 +13,22 @@ import {
   useState,
 } from 'react';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, MapPin, Pause, Play } from 'lucide-react';
 import { z } from 'zod';
 import type { CotacaoCheckout } from '@/modules/carrinho/application/checkout-dto';
+
+// TODO: substituir pelos dados reais da Rare Essence antes da virada para produção
+const CONTATO_LOJA = {
+  endereco: 'Rua Oscar Freire, 1000 · Jardins',
+  cidadeUf: 'São Paulo — SP · Brasil',
+  horario: 'Atendimento: Seg a Sex, 9h às 18h',
+  email: 'contato@rareessence.com.br',
+  instagramHandle: '@rareessence.parfums',
+  instagramUrl: 'https://instagram.com/rareessence.parfums',
+  whatsappNumero: '5511999999999',
+  whatsappExibicao: '(11) 99999-9999',
+  whatsappMensagem: 'Olá! Gostaria de um atendimento personalizado na Rare Essence.',
+} as const;
 
 const mensagensBeneficios = [
   '5% de desconto no Pix',
@@ -120,8 +134,24 @@ function dinheiro(centavos: number): string {
   }).format(centavos / 100);
 }
 
+function rolarParaSecaoNaHome(
+  event: MouseEvent<HTMLAnchorElement>,
+  pathname: string,
+  secaoId: string,
+) {
+  if (pathname !== '/') return;
+  const alvo = document.getElementById(secaoId);
+  if (!alvo) return;
+  event.preventDefault();
+  const reduzirMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  alvo.scrollIntoView({ behavior: reduzirMovimento ? 'auto' : 'smooth', block: 'start' });
+  window.history.replaceState(null, '', `/#${secaoId}`);
+}
+
 function StoreHeader() {
   const { quantidadeItens, openCart } = useCart();
+  const pathname = usePathname();
+
   return (
     <div className="sticky top-0 z-30">
       <AnnouncementBar />
@@ -130,10 +160,28 @@ function StoreHeader() {
           <Link className="font-serif text-lg tracking-[0.12em] text-brand-text" href="/">
             RARE <span className="text-brand-accent">ESSENCE</span>
           </Link>
-          <nav className="hidden items-center gap-8 text-[10px] uppercase tracking-[0.2em] text-brand-muted sm:flex">
-            <Link className="transition hover:text-brand-text" href="/#colecao">A coleção</Link>
-            <Link className="transition hover:text-brand-text" href="/#pilares">Confiança</Link>
-            <Link className="transition hover:text-brand-text" href="/#manifesto">Manifesto</Link>
+          <nav aria-label="Navegação principal" className="hidden items-center gap-8 text-[10px] uppercase tracking-[0.2em] text-brand-muted sm:flex">
+            <Link
+              className="transition hover:text-brand-text"
+              href="/#colecao"
+              onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'colecao')}
+            >
+              A coleção
+            </Link>
+            <Link
+              className="transition hover:text-brand-text"
+              href="/#pilares"
+              onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'pilares')}
+            >
+              Confiança
+            </Link>
+            <Link
+              className="transition hover:text-brand-text"
+              href="/#manifesto"
+              onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'manifesto')}
+            >
+              Manifesto
+            </Link>
           </nav>
           <button
             aria-label="Abrir carrinho"
@@ -146,6 +194,154 @@ function StoreHeader() {
         </div>
       </header>
     </div>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg aria-hidden fill="none" height="15" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="15">
+      <rect height="20" rx="5" ry="5" width="20" x="2" y="2" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon({ size = 15 }: { size?: number }) {
+  return (
+    <svg aria-hidden fill="none" height={size} stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width={size}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
+
+function StoreFooter() {
+  const pathname = usePathname();
+  const whatsappUrl = `https://wa.me/${CONTATO_LOJA.whatsappNumero}?text=${encodeURIComponent(CONTATO_LOJA.whatsappMensagem)}`;
+
+  return (
+    <footer className="border-t border-brand-border bg-brand-surface/40">
+      <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
+        <div className="grid gap-10 md:grid-cols-3">
+          <div>
+            <Link className="font-serif text-xl tracking-[0.14em] text-brand-text" href="/">
+              RARE <span className="text-brand-accent">ESSENCE</span>
+            </Link>
+            <p className="mt-3 max-w-xs text-xs leading-6 text-brand-muted">
+              Haute parfumerie. Uma assinatura, nunca uma repetição.
+            </p>
+            <div className="mt-5 flex items-start gap-2.5 text-xs text-brand-muted">
+              <MapPin aria-hidden className="mt-0.5 shrink-0 text-brand-accent" size={14} />
+              <div>
+                <p>{CONTATO_LOJA.endereco}</p>
+                <p>{CONTATO_LOJA.cidadeUf}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-accent">
+              Navegação
+            </p>
+            <ul className="mt-4 space-y-2.5 text-xs text-brand-muted">
+              <li>
+                <Link
+                  className="transition hover:text-brand-text"
+                  href="/#colecao"
+                  onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'colecao')}
+                >
+                  A coleção
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className="transition hover:text-brand-text"
+                  href="/#pilares"
+                  onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'pilares')}
+                >
+                  Comprar com confiança
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className="transition hover:text-brand-text"
+                  href="/#manifesto"
+                  onClick={(event) => rolarParaSecaoNaHome(event, pathname, 'manifesto')}
+                >
+                  O manifesto
+                </Link>
+              </li>
+            </ul>
+            <p className="mt-5 text-[11px] text-brand-muted/80">{CONTATO_LOJA.horario}</p>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-accent">
+              Canais &amp; Concierge
+            </p>
+            <ul className="mt-4 space-y-3 text-xs text-brand-muted">
+              <li>
+                <a
+                  className="inline-flex items-center gap-2.5 transition hover:text-brand-text"
+                  href={CONTATO_LOJA.instagramUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span className="text-brand-accent"><InstagramIcon /></span>
+                  {CONTATO_LOJA.instagramHandle}
+                </a>
+              </li>
+              <li>
+                <a
+                  className="inline-flex items-center gap-2.5 transition hover:text-brand-text"
+                  href={whatsappUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span className="text-brand-accent"><WhatsAppIcon /></span>
+                  WhatsApp {CONTATO_LOJA.whatsappExibicao}
+                </a>
+              </li>
+              <li>
+                <a
+                  className="inline-flex items-center gap-2.5 transition hover:text-brand-text"
+                  href={`mailto:${CONTATO_LOJA.email}`}
+                >
+                  <Mail aria-hidden className="text-brand-accent" size={14} />
+                  {CONTATO_LOJA.email}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-brand-border pt-6 text-[11px] text-brand-muted sm:flex-row">
+          <p>© {new Date().getFullYear()} Rare Essence. Todos os direitos reservados.</p>
+          <p className="uppercase tracking-[0.14em] text-brand-muted/90">
+            Pix 5% OFF · Até 6x sem juros · Envio Correios
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function WhatsAppConcierge() {
+  const whatsappUrl = `https://wa.me/${CONTATO_LOJA.whatsappNumero}?text=${encodeURIComponent(CONTATO_LOJA.whatsappMensagem)}`;
+
+  return (
+    <a
+      aria-label="Falar com atendimento da Rare Essence no WhatsApp"
+      className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2.5 border border-brand-accent/60 bg-brand-surface/95 px-4 py-3 text-[11px] font-medium uppercase tracking-[0.16em] text-brand-text shadow-2xl backdrop-blur transition hover:border-brand-gold hover:bg-brand-accent hover:text-brand-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-gold"
+      href={whatsappUrl}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <span className="text-brand-pix">
+        <WhatsAppIcon size={16} />
+      </span>
+      <span className="hidden sm:inline">Atendimento</span>
+    </a>
   );
 }
 
@@ -578,6 +774,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider value={value}>
       {!isAdmin && <StoreHeader />}
       {children}
+      {!isAdmin && <StoreFooter />}
+      {!isAdmin && !aberto && <WhatsAppConcierge />}
       {!isAdmin && <CartDrawer />}
     </CartContext.Provider>
   );

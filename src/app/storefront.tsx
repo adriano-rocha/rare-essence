@@ -64,7 +64,7 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
 
   return (
     <>
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-10" id="colecao">
+      <section className="mx-auto max-w-7xl scroll-mt-28 px-6 py-20 lg:px-10" id="colecao">
         <div className="mb-8 flex items-end justify-between gap-5">
           <div>
             <p className="text-[10px] uppercase tracking-[0.28em] text-brand-accent">A coleção</p>
@@ -107,15 +107,55 @@ export function Storefront({ products }: { products: StoreProduct[] }) {
         )}
       </section>
       <TrustPillars />
-      <section className="border-y border-brand-border bg-brand-surface/50" id="manifesto">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-accent">O manifesto</p>
-          <p className="mt-5 font-serif text-2xl leading-relaxed text-brand-text sm:text-3xl">
-            “A fragrância certa não anuncia sua chegada. Ela torna sua presença inesquecível.”
-          </p>
-        </div>
-      </section>
+      <ManifestoSection />
     </>
+  );
+}
+
+function ManifestoSection() {
+  const compromissos = [
+    {
+      titulo: 'Curadoria autoral',
+      descricao: 'Selecionamos criações com personalidade marcante, longe do óbvio das prateleiras comuns.',
+    },
+    {
+      titulo: 'Matérias-primas nobres',
+      descricao: 'Alta concentração e evolução equilibrada entre saída, corpo e fundo ao longo do dia.',
+    },
+    {
+      titulo: 'Procedência garantida',
+      descricao: 'Frascos originais, envio protegido e acompanhamento transparente até a entrega.',
+    },
+  ];
+
+  return (
+    <section
+      aria-labelledby="manifesto-heading"
+      className="scroll-mt-28 border-t border-brand-border bg-brand-surface/50"
+      id="manifesto"
+    >
+      <div className="mx-auto max-w-5xl px-6 py-20 text-center lg:px-10">
+        <p className="text-[10px] uppercase tracking-[0.28em] text-brand-accent">O manifesto</p>
+        <h2
+          className="mt-5 font-serif text-3xl leading-relaxed text-brand-text sm:text-4xl"
+          id="manifesto-heading"
+        >
+          “A fragrância certa não anuncia sua chegada. Ela torna sua presença inesquecível.”
+        </h2>
+        <p className="mx-auto mt-6 max-w-2xl text-sm leading-7 text-brand-muted">
+          Na Rare Essence, cada perfume é tratado como uma assinatura íntima. Unimos casas e composições
+          singulares para quem escolhe o aroma pela memória que deseja deixar, nunca pelo excesso.
+        </p>
+        <div className="mt-12 grid gap-6 border-t border-brand-border pt-10 text-left sm:grid-cols-3">
+          {compromissos.map((item) => (
+            <div className="border-l border-brand-accent/40 pl-4" key={item.titulo}>
+              <p className="font-serif text-lg text-brand-text">{item.titulo}</p>
+              <p className="mt-2 text-xs leading-5 text-brand-muted">{item.descricao}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -290,7 +330,7 @@ function TrustPillars() {
   ];
 
   return (
-    <section aria-labelledby="trust-heading" className="border-y border-brand-border bg-brand-surface/50" id="pilares">
+    <section aria-labelledby="trust-heading" className="scroll-mt-28 border-y border-brand-border bg-brand-surface/50" id="pilares">
       <div className="mx-auto max-w-7xl px-6 py-14 lg:px-10">
         <p className="text-center text-[10px] uppercase tracking-[0.28em] text-brand-accent">Comprar com confiança</p>
         <h2 className="mt-3 text-center font-serif text-3xl text-brand-text" id="trust-heading">Os pilares Rare Essence</h2>

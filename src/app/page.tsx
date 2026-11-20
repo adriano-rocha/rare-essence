@@ -95,11 +95,6 @@ export default async function HomePage() {
       </section>
 
       <Storefront products={products} />
-
-      <footer className="border-t border-brand-border px-6 py-12 text-center">
-        <p className="font-serif text-lg text-brand-text">Rare Essence</p>
-        <p className="mt-2 text-xs tracking-wide text-brand-muted">Uma assinatura, nunca uma repetição.</p>
-      </footer>
     </main>
   );
 }
