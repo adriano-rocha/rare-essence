@@ -3,12 +3,13 @@ import { EstoqueRepository } from '../application/ports/estoque-repository';
 import { EstoqueItem } from '../domain/estoque-item';
 
 type PrismaEstoqueClient = Prisma.TransactionClient;
+type ClientePrisma = PrismaClient | Prisma.TransactionClient;
 
 export class PrismaEstoqueRepository implements EstoqueRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: ClientePrisma) {}
 
   async salvar(item: EstoqueItem): Promise<void> {
-    await this.prisma.$transaction(async (transacao) => {
+    await this.executarEmTransacao(async (transacao) => {
       await this.bloquearVariacao(transacao, item.variacaoId);
       await this.salvarNaTransacao(transacao, item);
     });
@@ -28,7 +29,7 @@ export class PrismaEstoqueRepository implements EstoqueRepository {
       salvar: (item: EstoqueItem) => Promise<void>
     ) => Promise<T>
   ): Promise<T> {
-    return this.prisma.$transaction(async (transacao) => {
+    return this.executarEmTransacao(async (transacao) => {
       await this.bloquearVariacao(transacao, variacaoId);
 
       const registro = await transacao.estoqueItem.findUnique({
@@ -40,6 +41,15 @@ export class PrismaEstoqueRepository implements EstoqueRepository {
 
       return operacao(item, salvar);
     });
+  }
+
+  private executarEmTransacao<T>(
+    operacao: (transacao: PrismaEstoqueClient) => Promise<T>
+  ): Promise<T> {
+    if ('$transaction' in this.prisma) {
+      return this.prisma.$transaction((transacao) => operacao(transacao));
+    }
+    return operacao(this.prisma);
   }
 
   private async salvarNaTransacao(
