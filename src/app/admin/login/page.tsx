@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   async function entrar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -63,13 +65,23 @@ export default function AdminLoginPage() {
           </label>
           <label className="block text-sm text-brand-muted">
             Senha
-            <input
-              autoComplete="current-password"
-              className="mt-1 w-full rounded border border-brand-border bg-brand-bg p-3 text-brand-text outline-none focus:border-brand-accent"
-              name="senha"
-              required
-              type="password"
-            />
+            <div className="relative mt-1">
+              <input
+                autoComplete="current-password"
+                className="w-full rounded border border-brand-border bg-brand-bg p-3 pr-11 text-brand-text outline-none focus:border-brand-accent"
+                name="senha"
+                required
+                type={mostrarSenha ? 'text' : 'password'}
+              />
+              <button
+                aria-label={mostrarSenha ? 'Ocultar senha' : 'Visualizar senha'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-muted transition hover:text-brand-text"
+                onClick={() => setMostrarSenha((atual) => !atual)}
+                type="button"
+              >
+                {mostrarSenha ? <EyeOff aria-hidden size={18} /> : <Eye aria-hidden size={18} />}
+              </button>
+            </div>
           </label>
           {erro && (
             <p aria-live="polite" className="text-sm text-red-400" role="alert">
