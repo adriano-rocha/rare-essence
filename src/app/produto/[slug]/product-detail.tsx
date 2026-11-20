@@ -147,6 +147,7 @@ export function ProductDetail({
               sku: selected.sku,
               nomeProduto: name,
               slug,
+              imagemUrl: imageUrl,
               volumeMl: selected.volumeMl,
               precoCentavos: selected.precoCentavos,
               estoqueDisponivel: selected.estoqueDisponivel,

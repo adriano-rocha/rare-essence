@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: dark; 
   --bg-primary: #0F0E0E;
   --bg-surface: #1A1817;
   --text-main: #F5F5F4;
@@ -52,11 +53,11 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill {
-  -webkit-text-fill-color: var(--text-main);
-  -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+  -webkit-text-fill-color: #F5F5F4 !important;
+  -webkit-box-shadow: 0 0 0 1000px #0F0E0E inset !important;
+  caret-color: #F5F5F4;
   transition: background-color 5000s ease-in-out 0s;
 }
-
 :focus-visible {
   outline: 2px solid var(--brand-gold);
   outline-offset: 3px;

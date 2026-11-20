@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   createContext,
@@ -26,6 +27,7 @@ export interface CartLine {
   sku: string;
   nomeProduto: string;
   slug: string;
+  imagemUrl?: string | null;
   volumeMl: number;
   precoCentavos: number;
   estoqueDisponivel: number;
@@ -38,6 +40,7 @@ const carrinhoSchema = z.array(
     sku: z.string().min(1),
     nomeProduto: z.string().min(1),
     slug: z.string().min(1),
+    imagemUrl: z.string().nullable().optional(),
     volumeMl: z.number().int().positive(),
     precoCentavos: z.number().int().nonnegative(),
     estoqueDisponivel: z.number().int().nonnegative(),
@@ -414,9 +417,25 @@ function CartDrawer() {
                     const precoAtual = cotado?.precoUnitarioCentavos ?? item.precoCentavos;
                     return (
                       <article className="flex gap-4 border-b border-brand-border pb-5" key={item.variacaoId}>
-                        <div aria-hidden className="product-art art-1 flex h-24 w-20 shrink-0 items-center justify-center border border-brand-border">
-                          <div className="bottle-card h-14 w-9 rounded-lg border border-brand-accent/30" />
-                        </div>
+                        <Link
+                          className={`${item.imagemUrl ? 'studio-frame p-2' : 'product-art'} relative flex h-24 w-20 shrink-0 items-center justify-center overflow-hidden border border-brand-border`}
+                          href={`/produto/${item.slug}`}
+                          onClick={closeCart}
+                        >
+                          {item.imagemUrl ? (
+                            <div className="relative h-full w-full">
+                              <Image
+                                alt={item.nomeProduto}
+                                className="object-contain mix-blend-multiply"
+                                fill
+                                sizes="80px"
+                                src={item.imagemUrl}
+                              />
+                            </div>
+                          ) : (
+                            <div aria-hidden className="bottle-card h-14 w-9 rounded-lg border border-brand-accent/30" />
+                          )}
+                        </Link>
                         <div className="min-w-0 flex-1">
                           <Link className="font-serif text-lg text-brand-text hover:text-brand-accent" href={`/produto/${item.slug}`} onClick={closeCart}>{item.nomeProduto}</Link>
                           <p className="mt-1 text-[10px] uppercase tracking-widest text-brand-muted">{item.volumeMl} ml · {item.sku}</p>

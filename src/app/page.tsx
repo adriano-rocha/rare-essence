@@ -77,7 +77,7 @@ export default async function HomePage() {
               transforma presença em assinatura.
             </p>
             <Link
-              className="mt-9 inline-flex items-center gap-3 bg-brand-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg transition hover:bg-purple-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              className="mt-9 inline-flex items-center gap-3 bg-brand-accent px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg transition hover:bg-brand-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
               href="#colecao"
             >
               Ver coleção <span aria-hidden>↘</span>

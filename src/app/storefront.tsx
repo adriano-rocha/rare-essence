@@ -234,8 +234,8 @@ function ProductCard({ product }: { product: StoreProduct }) {
             ))}
           </div>
         </fieldset>
-        <div className="mt-5 border-t border-brand-border pt-4">
-          <div className="flex items-center justify-between gap-2">
+        <div className="mt-auto border-t border-brand-border pt-4">
+          <div className="mt-1 flex items-center justify-between gap-2">
             <span className="bg-brand-pix/15 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-brand-pix">
               {variacao.descontoPixPercentual}% OFF no Pix
             </span>
@@ -251,11 +251,6 @@ function ProductCard({ product }: { product: StoreProduct }) {
           <p className="mt-1 text-[10px] text-brand-muted">Frete calculado na sacolinha.</p>
         </div>
         <button
-          className="mt-auto w-full pt-4"
-          tabIndex={-1}
-          type="button"
-        />
-        <button
           className="mt-4 w-full bg-brand-accent px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-bg transition hover:bg-brand-gold disabled:cursor-not-allowed disabled:opacity-50"
           disabled={variacao.estoqueDisponivel <= 0}
           onClick={() => {
@@ -264,6 +259,7 @@ function ProductCard({ product }: { product: StoreProduct }) {
               sku: variacao.sku,
               nomeProduto: product.nome,
               slug: product.slug,
+              imagemUrl: product.imagemUrl,
               volumeMl: variacao.volumeMl,
               precoCentavos: variacao.precoCentavos,
               estoqueDisponivel: variacao.estoqueDisponivel,

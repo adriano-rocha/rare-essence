@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
         <p className="text-xs font-semibold uppercase tracking-widest text-brand-accent">
           Rare Essence
         </p>
-        <h1 className="mt-2 text-2xl font-serif font-bold text-brand-text">
+        <h1 className="mt-2 font-serif text-2xl font-bold text-brand-text">
           Acesso administrativo
         </h1>
         <form className="mt-6 space-y-4" onSubmit={entrar}>
@@ -55,7 +55,7 @@ export default function AdminLoginPage() {
             E-mail
             <input
               autoComplete="username"
-              className="mt-1 w-full rounded border border-brand-border bg-brand-primary p-3 text-brand-text"
+              className="mt-1 w-full rounded border border-brand-border bg-brand-bg p-3 text-brand-text outline-none focus:border-brand-accent"
               name="email"
               required
               type="email"
@@ -65,7 +65,7 @@ export default function AdminLoginPage() {
             Senha
             <input
               autoComplete="current-password"
-              className="mt-1 w-full rounded border border-brand-border bg-brand-primary p-3 text-brand-text"
+              className="mt-1 w-full rounded border border-brand-border bg-brand-bg p-3 text-brand-text outline-none focus:border-brand-accent"
               name="senha"
               required
               type="password"
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
             </p>
           )}
           <button
-            className="w-full rounded bg-brand-accent px-4 py-3 font-semibold text-brand-primary disabled:opacity-60"
+            className="w-full rounded bg-brand-accent px-4 py-3 font-semibold text-brand-bg transition hover:bg-brand-gold disabled:opacity-60"
             disabled={carregando}
             type="submit"
           >
