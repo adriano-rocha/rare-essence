@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "./store/cart-provider";
 import { getSiteUrl } from "@/shared/infra/site-url";
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 const isIndexable = process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview";
 const siteUrl = getSiteUrl();
@@ -37,8 +53,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-brand-bg text-brand-text antialiased selection:bg-brand-accent selection:text-white">
+    <html className={`${cormorant.variable} ${jakarta.variable}`} lang="pt-BR">
+      <body className="bg-brand-bg font-sans text-brand-text antialiased selection:bg-brand-accent selection:text-brand-bg">
         <CartProvider>{children}</CartProvider>
       </body>
     </html>

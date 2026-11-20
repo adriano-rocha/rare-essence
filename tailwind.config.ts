@@ -11,14 +11,19 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          bg: "#0E1013",       // Ônix Profundo (Fundo)
-          surface: "#181B20",  // Grafite Escuro (Cards/Containers)
-          text: "#F4F4F6",     // Branco Acetinado
-          muted: "#9CA3AF",    // Cinza Frio
-          accent: "#C084FC",   // Roxo ametista (Destaques)
-          pix: "#10B981",      // Verde Esmeralda (Preço Pix/Sucesso)
-          border: "#282D37",   // Linhas e Divisórias
+          bg: "#0F0E0E",       // Preto Obsidiana (60%)
+          surface: "#1A1817",  // Grafite Escuro (30%)
+          text: "#F5F5F4",     // Branco Pérola
+          muted: "#A8A29E",    // Prata Fosco
+          accent: "#C5A059",   // Champagne Dourado (10% - CTAs e destaques)
+          gold: "#D4AF37",     // Dourado Clássico (hover/foco)
+          pix: "#10B981",      // Verde Esmeralda (Preço Pix)
+          border: "#2B2725",   // Linhas sutis quentes
         },
+      },
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        serif: ["var(--font-serif)", "Georgia", "serif"],
       },
     },
   },

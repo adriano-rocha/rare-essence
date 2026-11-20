@@ -3,36 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #0E1013;
-  --bg-surface: #181B20;
-  --text-main: #F4F4F6;
-  --text-muted: #9CA3AF;
-  --brand-accent: #C084FC;
+  --bg-primary: #0F0E0E;
+  --bg-surface: #1A1817;
+  --text-main: #F5F5F4;
+  --text-muted: #A8A29E;
+  --brand-accent: #C5A059;
+  --brand-gold: #D4AF37;
   --badge-pix: #10B981;
-  --border-subtle: #282D37;
+  --border-subtle: #2B2725;
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
   min-height: 100vh;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.studio-frame {
+  background: radial-gradient(circle at 50% 45%, #FFFFFF 0%, #F8F7F4 68%, #EFECE6 100%);
 }
 
 .bottle-card {
   background:
-    linear-gradient(90deg, rgba(255,255,255,0.06), transparent 24%, transparent 76%, rgba(0,0,0,0.3)),
-    linear-gradient(160deg, #30263A 0%, #15121A 60%, #201525 100%);
+    linear-gradient(90deg, rgba(255,255,255,0.06), transparent 24%, transparent 76%, rgba(0,0,0,0.35)),
+    linear-gradient(160deg, #2C251D 0%, #151311 60%, #1E1914 100%);
 }
 
 .product-art {
-  background: radial-gradient(ellipse at 50% 70%, rgba(192,132,252,0.12), transparent 48%), #131519;
+  background: radial-gradient(ellipse at 50% 70%, rgba(197, 160, 89, 0.14), transparent 50%), #141210;
 }
-
-.product-art.art-1 { background: radial-gradient(ellipse at 50% 70%, rgba(168,115,230,0.16), transparent 48%), #151515; }
-.product-art.art-2 { background: radial-gradient(ellipse at 50% 70%, rgba(194,104,181,0.14), transparent 48%), #141619; }
-.product-art.art-3 { background: radial-gradient(ellipse at 50% 70%, rgba(126,110,220,0.14), transparent 48%), #151719; }
-.product-art.art-4 { background: radial-gradient(ellipse at 50% 70%, rgba(155,113,215,0.14), transparent 48%), #171615; }
 
 .form-field {
   display: block;
@@ -49,8 +48,17 @@ body {
   border-color: var(--brand-accent);
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: var(--text-main);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-surface) inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 :focus-visible {
-  outline: 2px solid var(--brand-accent);
+  outline: 2px solid var(--brand-gold);
   outline-offset: 3px;
 }
 
