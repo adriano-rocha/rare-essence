@@ -76,6 +76,59 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+function apenasDigitos(valor: string): string {
+  return valor.replace(/\D/g, '');
+}
+
+function formatarCep(valor: string): string {
+  const digitos = apenasDigitos(valor).slice(0, 8);
+  if (digitos.length <= 5) return digitos;
+  return `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
+}
+
+function formatarCpf(valor: string): string {
+  const digitos = apenasDigitos(valor).slice(0, 11);
+  if (digitos.length <= 3) return digitos;
+  if (digitos.length <= 6) return `${digitos.slice(0, 3)}.${digitos.slice(3)}`;
+  if (digitos.length <= 9) {
+    return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6)}`;
+  }
+  return `${digitos.slice(0, 3)}.${digitos.slice(3, 6)}.${digitos.slice(6, 9)}-${digitos.slice(9)}`;
+}
+
+function formatarTelefone(valor: string): string {
+  const digitos = apenasDigitos(valor).slice(0, 11);
+  if (digitos.length === 0) return '';
+  if (digitos.length <= 2) return `(${digitos}`;
+  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  if (digitos.length <= 10) {
+    return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+  }
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
+
+function cpfValido(valor: string): boolean {
+  const cpf = apenasDigitos(valor);
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += Number(cpf[i]) * (10 - i);
+  }
+  let resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  if (resto !== Number(cpf[9])) return false;
+
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += Number(cpf[i]) * (11 - i);
+  }
+  resto = (soma * 10) % 11;
+  if (resto === 10) resto = 0;
+  return resto === Number(cpf[10]);
+}
+
 function AnnouncementBar() {
   const [indice, setIndice] = useState(0);
   const [pausado, setPausado] = useState(false);
@@ -342,9 +395,7 @@ function WhatsAppConcierge() {
       rel="noopener noreferrer"
       target="_blank"
     >
-      <span className="text-brand-pix">
-        <WhatsAppIcon size={20} />
-      </span>
+      <WhatsAppIcon size={20} />
       <span className="hidden sm:inline">Atendimento</span>
     </a>
   );
@@ -365,6 +416,17 @@ function CartDrawer() {
   const [etapa, setEtapa] = useState<'carrinho' | 'checkout' | 'pagamento'>('carrinho');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
+
+  const [cpf, setCpf] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [logradouro, setLogradouro] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [cidade, setCidade] = useState('');
+  const [estado, setEstado] = useState('');
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  const [avisoCep, setAvisoCep] = useState('');
+  const [cepBuscado, setCepBuscado] = useState('');
+
   const [pagamento, setPagamento] = useState<{
     pedidoId: string;
     codigoPedido: string;
@@ -382,7 +444,67 @@ function CartDrawer() {
     return () => window.removeEventListener('keydown', fecharComEsc);
   }, [aberto, closeCart]);
 
+  useEffect(() => {
+    if (etapa !== 'checkout') return;
+    const cepLimpo = apenasDigitos(cep);
+    if (cepLimpo.length !== 8 || cepBuscado === cepLimpo) return;
+
+    let cancelado = false;
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 5000);
+
+    async function buscarEnderecoPorCep() {
+      setBuscandoCep(true);
+      setAvisoCep('');
+      try {
+        const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`, {
+          signal: controller.signal,
+        });
+        if (!resposta.ok) throw new Error('Falha ViaCEP');
+        const dados = (await resposta.json()) as {
+          erro?: boolean | string;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        };
+        if (cancelado) return;
+        setCepBuscado(cepLimpo);
+        if (dados.erro) {
+          setAvisoCep('CEP não localizado automaticamente. Preencha o endereço abaixo.');
+          return;
+        }
+        if (dados.logradouro) setLogradouro(dados.logradouro);
+        if (dados.bairro) setBairro(dados.bairro);
+        if (dados.localidade) setCidade(dados.localidade);
+        if (dados.uf) setEstado(dados.uf.toUpperCase().slice(0, 2));
+        setAvisoCep(
+          dados.logradouro
+            ? 'Endereço preenchido automaticamente pelo CEP.'
+            : 'CEP único localizado. Complete rua e bairro abaixo.'
+        );
+      } catch {
+        if (cancelado) return;
+        setAvisoCep('Não foi possível consultar o CEP agora. Preencha o endereço manualmente.');
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (!cancelado) setBuscandoCep(false);
+      }
+    }
+
+    buscarEnderecoPorCep();
+
+    return () => {
+      cancelado = true;
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [cep, cepBuscado, etapa]);
+
   if (!aberto) return null;
+
+  const cpfDigitos = apenasDigitos(cpf);
+  const cpfInvalidoVisivel = cpfDigitos.length === 11 && !cpfValido(cpf);
 
   async function cotar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -414,6 +536,18 @@ function CartDrawer() {
   async function finalizar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!frete) return;
+
+    if (!cpfValido(cpf)) {
+      setErro('Informe um CPF válido antes de finalizar o pedido.');
+      return;
+    }
+
+    const telefoneDigitos = apenasDigitos(telefone);
+    if (telefoneDigitos.length < 10 || telefoneDigitos.length > 11) {
+      setErro('Informe um telefone válido com DDD.');
+      return;
+    }
+
     setErro('');
     setCarregando(true);
     const form = new FormData(event.currentTarget);
@@ -425,17 +559,17 @@ function CartDrawer() {
           cliente: {
             nome: form.get('nome'),
             email: form.get('email'),
-            cpf: form.get('cpf'),
-            telefone: form.get('telefone'),
+            cpf,
+            telefone,
           },
           enderecoEntrega: {
             cep,
-            logradouro: form.get('logradouro'),
+            logradouro,
             numero: form.get('numero'),
             complemento: form.get('complemento'),
-            bairro: form.get('bairro'),
-            cidade: form.get('cidade'),
-            estado: form.get('estado'),
+            bairro,
+            cidade,
+            estado,
           },
           itens: itens.map(({ variacaoId, quantidade }) => ({ variacaoId, quantidade })),
           freteModalidade: frete,
@@ -574,23 +708,128 @@ function CartDrawer() {
             </div>
           ) : etapa === 'checkout' ? (
             <form className="space-y-4" onSubmit={finalizar}>
-              <p className="mb-5 text-xs text-brand-muted">Entrega em {cep} · frete {frete}</p>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-xs text-brand-muted">Entrega em {cep} · frete {frete}</p>
+                <button
+                  className="text-[11px] uppercase tracking-wider text-brand-accent transition hover:text-brand-gold"
+                  onClick={() => {
+                    setErro('');
+                    setEtapa('carrinho');
+                  }}
+                  type="button"
+                >
+                  ← Alterar CEP ou entrega
+                </button>
+              </div>
               <label className="block text-xs text-brand-muted">Nome completo<input autoComplete="name" className="form-field" maxLength={100} minLength={2} name="nome" required /></label>
               <label className="block text-xs text-brand-muted">E-mail<input autoComplete="email" className="form-field" name="email" required type="email" /></label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-xs text-brand-muted">CPF<input className="form-field" inputMode="numeric" maxLength={14} name="cpf" required /></label>
-                <label className="block text-xs text-brand-muted">Telefone<input autoComplete="tel" className="form-field" inputMode="tel" name="telefone" required /></label>
+                <label className="block text-xs text-brand-muted">
+                  CPF
+                  <input
+                    aria-invalid={cpfInvalidoVisivel}
+                    className={`form-field ${cpfInvalidoVisivel ? 'border-red-500/80 focus:border-red-400' : ''}`}
+                    inputMode="numeric"
+                    maxLength={14}
+                    name="cpf"
+                    onChange={(event) => {
+                      setCpf(formatarCpf(event.target.value));
+                      if (erro) setErro('');
+                    }}
+                    placeholder="000.000.000-00"
+                    required
+                    value={cpf}
+                  />
+                  {cpfInvalidoVisivel && (
+                    <span className="mt-1 block text-[11px] text-red-300">
+                      CPF inválido. Verifique os dígitos.
+                    </span>
+                  )}
+                </label>
+                <label className="block text-xs text-brand-muted">
+                  Telefone
+                  <input
+                    autoComplete="tel"
+                    className="form-field"
+                    inputMode="tel"
+                    maxLength={15}
+                    name="telefone"
+                    onChange={(event) => {
+                      setTelefone(formatarTelefone(event.target.value));
+                      if (erro) setErro('');
+                    }}
+                    placeholder="(11) 99999-9999"
+                    required
+                    value={telefone}
+                  />
+                </label>
               </div>
+              {(buscandoCep || avisoCep) && (
+                <p className="text-[11px] text-brand-accent" role="status">
+                  {buscandoCep ? 'Buscando endereço pelo CEP...' : avisoCep}
+                </p>
+              )}
               <div className="grid gap-4 sm:grid-cols-[1fr_0.55fr]">
-                <label className="block text-xs text-brand-muted">Rua / avenida<input autoComplete="address-line1" className="form-field" maxLength={120} name="logradouro" required /></label>
-                <label className="block text-xs text-brand-muted">Número<input className="form-field" maxLength={20} name="numero" required /></label>
+                <label className="block text-xs text-brand-muted">
+                  Rua / avenida
+                  <input
+                    autoComplete="address-line1"
+                    className="form-field"
+                    maxLength={120}
+                    name="logradouro"
+                    onChange={(event) => setLogradouro(event.target.value)}
+                    required
+                    value={logradouro}
+                  />
+                </label>
+                <label className="block text-xs text-brand-muted">
+                  Número
+                  <input className="form-field" maxLength={20} name="numero" required />
+                </label>
               </div>
               <label className="block text-xs text-brand-muted">Complemento (opcional)<input className="form-field" maxLength={100} name="complemento" /></label>
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-xs text-brand-muted">Bairro<input autoComplete="address-level3" className="form-field" maxLength={100} name="bairro" required /></label>
-                <label className="block text-xs text-brand-muted">Cidade<input autoComplete="address-level2" className="form-field" maxLength={100} name="cidade" required /></label>
+                <label className="block text-xs text-brand-muted">
+                  Bairro
+                  <input
+                    autoComplete="address-level3"
+                    className="form-field"
+                    maxLength={100}
+                    name="bairro"
+                    onChange={(event) => setBairro(event.target.value)}
+                    required
+                    value={bairro}
+                  />
+                </label>
+                <label className="block text-xs text-brand-muted">
+                  Cidade
+                  <input
+                    autoComplete="address-level2"
+                    className="form-field"
+                    maxLength={100}
+                    name="cidade"
+                    onChange={(event) => setCidade(event.target.value)}
+                    required
+                    value={cidade}
+                  />
+                </label>
               </div>
-              <label className="block text-xs text-brand-muted">Estado (UF)<input autoComplete="address-level1" className="form-field uppercase" maxLength={2} minLength={2} name="estado" required /></label>
+              <label className="block text-xs text-brand-muted">
+                Estado (UF)
+                <input
+                  autoComplete="address-level1"
+                  className="form-field uppercase"
+                  maxLength={2}
+                  minLength={2}
+                  name="estado"
+                  onChange={(event) =>
+                    setEstado(event.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2))
+                  }
+                  placeholder="SP"
+                  required
+                  value={estado}
+                />
+              </label>
               <div className="border-t border-brand-border pt-4">
                 {opcaoFrete && (
                   <>
@@ -599,7 +838,7 @@ function CartDrawer() {
                   </>
                 )}
               </div>
-              <button className="w-full bg-brand-accent px-4 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg disabled:opacity-60" disabled={carregando || !frete} type="submit">
+              <button className="w-full bg-brand-accent px-4 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg transition hover:bg-brand-gold disabled:opacity-60" disabled={carregando || !frete || cpfInvalidoVisivel} type="submit">
                 {carregando ? 'Criando pedido...' : 'Criar pedido e gerar Pix'}
               </button>
               <p className="text-center text-[10px] text-brand-muted">Checkout seguro · pagamento processado pelo Mercado Pago</p>
@@ -669,7 +908,26 @@ function CartDrawer() {
                 <form className="mt-7 border-t border-brand-border pt-6" onSubmit={cotar}>
                   <label className="block text-xs text-brand-muted" htmlFor="cep-cotacao">Calcule o frete pelo CEP</label>
                   <div className="mt-2 flex gap-2">
-                    <input className="form-field mt-0" id="cep-cotacao" inputMode="numeric" maxLength={9} onChange={(event) => { setCep(event.target.value); setCotacao(null); setFrete(null); }} placeholder="00000-000" required value={cep} />
+                    <input
+                      className="form-field mt-0"
+                      id="cep-cotacao"
+                      inputMode="numeric"
+                      maxLength={9}
+                      onChange={(event) => {
+                        setCep(formatarCep(event.target.value));
+                        setCotacao(null);
+                        setFrete(null);
+                        setCepBuscado('');
+                        setAvisoCep('');
+                        setLogradouro('');
+                        setBairro('');
+                        setCidade('');
+                        setEstado('');
+                      }}
+                      placeholder="00000-000"
+                      required
+                      value={cep}
+                    />
                     <button className="shrink-0 border border-brand-accent px-4 text-xs uppercase tracking-widest text-brand-text disabled:opacity-60" disabled={carregando} type="submit">{carregando ? '...' : 'Calcular'}</button>
                   </div>
                 </form>
@@ -693,7 +951,7 @@ function CartDrawer() {
                     </button>
                   ))}
                   {frete && (
-                    <button className="mt-3 w-full bg-brand-accent px-4 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg" onClick={() => setEtapa('checkout')} type="button">
+                    <button className="mt-3 w-full bg-brand-accent px-4 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-brand-bg transition hover:bg-brand-gold" onClick={() => setEtapa('checkout')} type="button">
                       Continuar para checkout
                     </button>
                   )}
